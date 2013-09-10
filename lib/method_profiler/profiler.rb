@@ -15,6 +15,7 @@ module MethodProfiler
     def initialize(obj)
       @obj = obj
       @data = Hash.new { |h, k| h[k] = [] }
+      @observing = true
 
       wrap_methods_with_profiling
     end
@@ -26,6 +27,22 @@ module MethodProfiler
     #
     def report
       Report.new(final_data, @obj.name)
+    end
+
+    def is_observing
+      @observing
+    end
+
+    def start
+      @observing = true
+    end
+
+    def stop
+      @observing = false
+    end
+
+    def get_data
+      final_data
     end
 
     private
@@ -41,8 +58,13 @@ module MethodProfiler
         group[:object].module_eval do
           group[:methods].each do |method|
             define_method("#{method}_with_profiling") do |*args, &block|
-              profiler.send(:profile, method, singleton: group[:singleton]) do
-                send("#{method}_without_profiling", *args, &block)
+              call_without = lambda { send("#{method}_without_profiling", *args, &block) }
+              if profiler.is_observing
+                profiler.send(:profile, method, singleton: group[:singleton], myclass: self.class) do
+                  call_without.call
+                end
+              else
+                call_without.call
               end
             end
 
