@@ -47,6 +47,7 @@ module MethodProfiler
 
     private
 
+    MAGIC="70fffb0909b375247a877c3b9c1706e4"
     def wrap_methods_with_profiling
       profiler = self
 
@@ -55,9 +56,11 @@ module MethodProfiler
         { object: @obj, methods: @obj.instance_methods(false), private: false },
       ].each do |group|
         group[:object].module_eval do
-          group[:methods].each do |method|
-            define_method("#{method}_with_profiling") do |*args, &block|
-              call_without = lambda { send("#{method}_without_profiling", *args, &block) }
+          methods = group[:methods].collect(&:to_s)
+          methods.each do |method|
+            next if method.to_s[MAGIC] || methods.index("#{method}_with_profiling#{MAGIC}")
+            define_method("#{method}_with_profiling#{MAGIC}") do |*args, &block|
+              call_without = lambda { send("#{method}_without_profiling#{MAGIC}", *args, &block) }
               if profiler.is_observing
                 profiler.send(:profile, method, singleton: group[:singleton], myclass: self.class) do
                   call_without.call
@@ -67,10 +70,10 @@ module MethodProfiler
               end
             end
 
-            alias_method "#{method}_without_profiling", method
-            alias_method method, "#{method}_with_profiling"
+            alias_method "#{method}_without_profiling#{MAGIC}", method
+            alias_method method, "#{method}_with_profiling#{MAGIC}"
 
-            private "#{method}_with_profiling" if group[:private]
+            private "#{method}_with_profiling#{MAGIC}" if group[:private]
           end
         end
       end
