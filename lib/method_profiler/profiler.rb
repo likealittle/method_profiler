@@ -62,7 +62,7 @@ module MethodProfiler
             define_method("#{method}_with_profiling#{MAGIC}") do |*args, &block|
               call_without = lambda { send("#{method}_without_profiling#{MAGIC}", *args, &block) }
               if profiler.is_observing
-                profiler.send(:profile, method, singleton: group[:singleton], myclass: self.class) do
+                profiler.send(:profile, method, singleton: group[:singleton], myclass: self.is_a?(Class) ? self : self.class) do
                   call_without.call
                 end
               else
