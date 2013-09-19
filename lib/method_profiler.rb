@@ -31,6 +31,6 @@ module MethodProfiler
 
   def self.get_report
     all_data = all_profilers.values.collect(&:get_data).flatten
-    Report.new(all_data, "all").to_a
+    Report.new(all_data, "all").to_s
   end
 end
