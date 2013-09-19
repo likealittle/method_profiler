@@ -53,7 +53,6 @@ module MethodProfiler
       [
         { object: @obj.singleton_class, methods: @obj.methods(false), private: false, singleton: true },
         { object: @obj, methods: @obj.instance_methods(false), private: false },
-        { object: @obj, methods: @obj.private_instance_methods(false), private: true }
       ].each do |group|
         group[:object].module_eval do
           group[:methods].each do |method|
